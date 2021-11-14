@@ -22,6 +22,7 @@ async function run() {
         console.log('database connected successfully');
         const database = client.db('bikeBooking');
         const productsCollection = database.collection('products');
+        const orderCollection = database.collection('orders');
 
         //get API
         app.get('/products', async (req, res) => {
@@ -55,7 +56,66 @@ async function run() {
             const query = { _id: ObjectId(id) };
             const result = await productsCollection.deleteOne(query);
             res.json(result);
+        });
+
+        //add order API
+        app.post('/orders', async (req, res) => {
+            const order = req.body;
+            console.log('order', order);
+            const result = await orderCollection.insertOne(order);
+            res.json(result);
+
+        });
+
+        // for update
+        app.put('/orders/:id', async (req, res) => {
+            const updateOrder = req.body[0];
+            const id = req.params.id;
+            // console.log(updateOrder);
+            const filter = { _id: ObjectId(id) };
+
+            const options = { upsert: true };
+
+            const updateDoc = {
+                $set: {
+                    name: updateOrder.name,
+                    email: updateOrder.email,
+                    price: updateOrder.price,
+                    orderStatus: updateOrder.orderStatus,
+                    address: updateOrder.address,
+                    phone: updateOrder.phone,
+                    title: updateOrder.title,
+                }
+            };
+            const result = await orderCollection.updateOne(filter, updateDoc, options);
+            console.log(result);
+            res.send(result);
         })
+
+        //get all order api
+        app.get('/orders', async (req, res) => {
+            const cursor = orderCollection.find({});
+            const orders = await cursor.toArray();
+            res.send(orders);
+        });
+
+        // get order api 
+        app.get('/orders/:id', async (req, res) => {
+            const id = req.params.id;
+            console.log('getting specific order', id);
+            const query = { _id: ObjectId(id) };
+            const singleOrder = await orderCollection.findOne(query);
+            res.json(singleOrder);
+        });
+
+        //delete order API
+        app.delete('/orders/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await orderCollection.deleteOne(query);
+            res.json(result);
+        })
+
 
     } finally {
 
